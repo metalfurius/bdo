@@ -1,7 +1,5 @@
 name: Build and Deploy WebGL
-
 on: push
-
 jobs:
   buildForAllSupportedPlatforms:
     name: Build for ${{ matrix.targetPlatform }}
@@ -10,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         targetPlatform:
-          - WebGL # WebGL.
+          - WebGL
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,8 +19,6 @@ jobs:
           path: Library
           key: Library-${{ matrix.targetPlatform }}
           restore-keys: Library-
-      - if: matrix.targetPlatform == 'Android'
-        uses: jlumbroso/free-disk-space@v1.3.1
       - uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -37,21 +33,19 @@ jobs:
       - name: Deploy to GitHub Pages
         if: matrix.targetPlatform == 'WebGL'
         run: |
-          # Configurar variables
           BUILD_DIR=build/WebGL
           GH_PAGES_BRANCH=gh-pages
           DEPLOY_DIR=$(mktemp -d)
-
-          # Clonar el branch de GitHub Pages
+          
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           git clone --depth=1 --branch=$GH_PAGES_BRANCH https://github.com/${{ github.repository }} $DEPLOY_DIR || git init $DEPLOY_DIR
-
-          # Copiar la build al branch de GitHub Pages
-          rsync -av --delete $BUILD_DIR/ $DEPLOY_DIR/
-
-          # Publicar en el branch gh-pages
           cd $DEPLOY_DIR
+          git checkout $GH_PAGES_BRANCH || git checkout --orphan $GH_PAGES_BRANCH
+          
+          rsync -av --delete $BUILD_DIR/ $DEPLOY_DIR/
+          
           git add .
           git commit -m "Deploy WebGL build from commit ${{ github.sha }}"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $GH_PAGES_BRANCH
