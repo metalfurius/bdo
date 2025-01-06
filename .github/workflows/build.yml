@@ -1,20 +1,18 @@
 name: Build and Deploy WebGL
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Permite ejecutar manualmente
 
 jobs:
   buildAndDeploy:
-    name: Build and Deploy WebGL
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout del repositorio
+      # Checkout del código fuente
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true
 
       # Cachear la carpeta Library
       - name: Cache Unity Library
@@ -41,33 +39,34 @@ jobs:
           name: Build-WebGL
           path: build/WebGL
 
-      # Descargar el artefacto para despliegue
-      - name: Download WebGL Artifact
+      # Descargar el artefacto para desplegarlo
+      - name: Download WebGL Build Artifact
         uses: actions/download-artifact@v3
         with:
           name: Build-WebGL
           path: WebGL-Build
 
-      # Desplegar a la branch gh-pages
+      # Crear o actualizar la branch gh-pages
       - name: Deploy to GitHub Pages
         run: |
           BUILD_DIR=WebGL-Build
           GH_PAGES_BRANCH=gh-pages
-          DEPLOY_DIR=$(mktemp -d)
 
           # Configurar Git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Clonar la branch gh-pages
-          git clone --depth=1 --branch=$GH_PAGES_BRANCH https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $DEPLOY_DIR || git init $DEPLOY_DIR
+          # Crear un nuevo repositorio en un directorio temporal
+          DEPLOY_DIR=$(mktemp -d)
+          mkdir -p $DEPLOY_DIR
           cd $DEPLOY_DIR
-          git checkout $GH_PAGES_BRANCH || git checkout --orphan $GH_PAGES_BRANCH
+          git init
+          git checkout --orphan $GH_PAGES_BRANCH
 
-          # Sincronizar los archivos de la build
-          rsync -av --delete $GITHUB_WORKSPACE/$BUILD_DIR/ $DEPLOY_DIR/
+          # Copiar los archivos de la build
+          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR
 
-          # Subir cambios
+          # Commit y push a la branch gh-pages
           git add .
-          git commit -m "Deploy WebGL build from commit ${{ github.sha }}" || echo "No changes to commit"
-          git push origin $GH_PAGES_BRANCH
+          git commit -m "Deploy WebGL build from commit ${{ github.sha }}"
+          git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $GH_PAGES_BRANCH
