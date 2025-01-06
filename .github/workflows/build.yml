@@ -35,13 +35,13 @@ jobs:
         with:
           targetPlatform: WebGL
 
-      # Crear o actualizar la branch gh-pages directamente
+      # Crear o actualizar la branch gh-pages
       - name: Deploy to GitHub Pages
         run: |
-          BUILD_DIR=build/WebGL
+          BUILD_DIR=build
           GH_PAGES_BRANCH=gh-pages
 
-          # Configurar Git
+           # Configurar Git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
