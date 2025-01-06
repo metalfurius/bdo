@@ -1,64 +1,73 @@
 name: Build and Deploy WebGL
 
-on: push
+on:
+  workflow_dispatch:
 
 jobs:
-  buildForAllSupportedPlatforms:
-    name: Build for ${{ matrix.targetPlatform }}
+  buildAndDeploy:
+    name: Build and Deploy WebGL
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        targetPlatform:
-          - WebGL
+
     steps:
-      - uses: actions/checkout@v4
+      # Checkout del repositorio
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
 
-      - uses: actions/cache@v3
+      # Cachear la carpeta Library
+      - name: Cache Unity Library
+        uses: actions/cache@v3
         with:
           path: Library
-          key: Library-${{ matrix.targetPlatform }}
+          key: Library-WebGL
           restore-keys: Library-
 
-      - uses: game-ci/unity-builder@v4
+      # Construir el proyecto en WebGL
+      - name: Build Unity Project
+        uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          targetPlatform: ${{ matrix.targetPlatform }}
+          targetPlatform: WebGL
 
-      - uses: actions/upload-artifact@v3
+      # Subir el artefacto generado
+      - name: Upload WebGL Build Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: Build-${{ matrix.targetPlatform }}
-          path: build/${{ matrix.targetPlatform }}
+          name: Build-WebGL
+          path: build/WebGL
 
+      # Descargar el artefacto para despliegue
+      - name: Download WebGL Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Build-WebGL
+          path: WebGL-Build
+
+      # Desplegar a la branch gh-pages
       - name: Deploy to GitHub Pages
-        if: matrix.targetPlatform == 'WebGL'
         run: |
-          BUILD_DIR=build/WebGL
+          BUILD_DIR=WebGL-Build
           GH_PAGES_BRANCH=gh-pages
           DEPLOY_DIR=$(mktemp -d)
 
+          # Configurar Git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git clone --depth=1 --branch=$GH_PAGES_BRANCH https://github.com/${{ github.repository }} $DEPLOY_DIR || git init $DEPLOY_DIR
+          # Clonar la branch gh-pages
+          git clone --depth=1 --branch=$GH_PAGES_BRANCH https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $DEPLOY_DIR || git init $DEPLOY_DIR
           cd $DEPLOY_DIR
           git checkout $GH_PAGES_BRANCH || git checkout --orphan $GH_PAGES_BRANCH
-          
-          # Descargar el artefacto de WebGL para poder usar rsync
-          - name: Download Build-WebGL artifact
-            uses: actions/download-artifact@v3
-            with:
-              name: Build-WebGL
-              path: $DEPLOY_DIR/WebGL
 
-          rsync -av --delete $DEPLOY_DIR/WebGL/ $DEPLOY_DIR/
+          # Sincronizar los archivos de la build
+          rsync -av --delete $GITHUB_WORKSPACE/$BUILD_DIR/ $DEPLOY_DIR/
 
+          # Subir cambios
           git add .
-          git commit -m "Deploy WebGL build from commit ${{ github.sha }}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $GH_PAGES_BRANCH
+          git commit -m "Deploy WebGL build from commit ${{ github.sha }}" || echo "No changes to commit"
+          git push origin $GH_PAGES_BRANCH
