@@ -35,7 +35,7 @@ jobs:
         with:
           targetPlatform: WebGL
 
-      # Crear o actualizar la branch gh-pages
+      # Crear o actualizar la branch gh-pages directamente
       - name: Deploy to GitHub Pages
         run: |
           BUILD_DIR=build/WebGL
@@ -45,15 +45,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Crear un nuevo repositorio en un directorio temporal
-          DEPLOY_DIR=$(mktemp -d)
-          mkdir -p $DEPLOY_DIR
-          cd $DEPLOY_DIR
-          git init
-          git checkout --orphan $GH_PAGES_BRANCH
+          # Hacer checkout de la rama gh-pages
+          git fetch origin $GH_PAGES_BRANCH || git checkout --orphan $GH_PAGES_BRANCH
+          git reset --hard
 
           # Copiar los archivos de la build directamente a la raíz de gh-pages
-          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR/
+          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* .
 
           # Commit y push a la branch gh-pages
           git add .
