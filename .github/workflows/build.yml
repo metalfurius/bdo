@@ -45,12 +45,15 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Hacer checkout de la rama gh-pages
-          git fetch origin $GH_PAGES_BRANCH || git checkout --orphan $GH_PAGES_BRANCH
-          git reset --hard
+          # Crear un nuevo repositorio en un directorio temporal
+          DEPLOY_DIR=$(mktemp -d)
+          mkdir -p $DEPLOY_DIR
+          cd $DEPLOY_DIR
+          git init
+          git checkout --orphan $GH_PAGES_BRANCH
 
           # Copiar los archivos de la build directamente a la raíz de gh-pages
-          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* .
+          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR/
 
           # Commit y push a la branch gh-pages
           git add .
