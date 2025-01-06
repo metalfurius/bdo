@@ -1,4 +1,4 @@
-name: Build and Deploy WebGL
+name: Build project
 
 on: push
 
@@ -34,24 +34,3 @@ jobs:
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}
-      - name: Deploy to GitHub Pages
-        if: matrix.targetPlatform == 'WebGL'
-        run: |
-          # Configurar variables
-          BUILD_DIR=build/WebGL
-          GH_PAGES_BRANCH=gh-pages
-          DEPLOY_DIR=$(mktemp -d)
-
-          # Clonar el branch de GitHub Pages
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git clone --depth=1 --branch=$GH_PAGES_BRANCH https://github.com/${{ github.repository }} $DEPLOY_DIR || git init $DEPLOY_DIR
-
-          # Copiar la build al branch de GitHub Pages
-          rsync -av --delete $BUILD_DIR/ $DEPLOY_DIR/
-
-          # Publicar en el branch gh-pages
-          cd $DEPLOY_DIR
-          git add .
-          git commit -m "Deploy WebGL build from commit ${{ github.sha }}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $GH_PAGES_BRANCH
