@@ -35,10 +35,24 @@ jobs:
         with:
           targetPlatform: WebGL
 
+      # Subir el artefacto generado
+      - name: Upload WebGL Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Build-WebGL
+          path: build/WebGL
+
+      # Descargar el artefacto para desplegarlo
+      - name: Download WebGL Build Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Build-WebGL
+          path: WebGL-Build
+
       # Crear o actualizar la branch gh-pages
       - name: Deploy to GitHub Pages
         run: |
-          BUILD_DIR=build/WebGL
+          BUILD_DIR=WebGL-Build
           GH_PAGES_BRANCH=gh-pages
 
           # Configurar Git
@@ -52,8 +66,8 @@ jobs:
           git init
           git checkout --orphan $GH_PAGES_BRANCH
 
-          # Copiar los archivos de la build directamente a la raíz de gh-pages
-          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR/
+          # Copiar los archivos de la build
+          cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR
 
           # Commit y push a la branch gh-pages
           git add .
