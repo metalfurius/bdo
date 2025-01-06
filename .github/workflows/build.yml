@@ -3,6 +3,9 @@ name: Build and Deploy WebGL
 on:
   workflow_dispatch: # Permite ejecutar manualmente
 
+permissions:
+  contents: write
+
 jobs:
   buildAndDeploy:
     runs-on: ubuntu-latest
