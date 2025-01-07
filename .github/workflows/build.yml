@@ -38,7 +38,7 @@ jobs:
       # Crear o actualizar la branch gh-pages directamente
       - name: Deploy to GitHub Pages
         run: |
-          BUILD_DIR=build/Docs
+          BUILD_DIR=build/WebGL
           GH_PAGES_BRANCH=gh-pages
 
           # Configurar Git
@@ -54,6 +54,9 @@ jobs:
 
           # Copiar los archivos de la build directamente a la raíz de gh-pages
           cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR/
+
+          # Eliminar la carpeta WebGL (si deseas borrar la carpeta después de copiar los archivos)
+          rm -rf $GITHUB_WORKSPACE/$BUILD_DIR
 
           # Commit y push a la branch gh-pages
           git add .
