@@ -29,6 +29,8 @@ public class EnhancementCalculator : MonoBehaviour
         useCronsToggle.onValueChanged.AddListener(OnToggleChanged);
 
         resultText.text = "Introduce valores en los campos para calcular.";
+        
+        Calculate();
     }
 
     private void OnInputChanged(string value)
