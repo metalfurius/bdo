@@ -52,11 +52,14 @@ jobs:
           git init
           git checkout --orphan $GH_PAGES_BRANCH
 
-          # Copiar los archivos de la build directamente a la raíz de gh-pages
+          # Copiar los archivos de la build (que están dentro de la carpeta WebGL) a la raíz de gh-pages
           cp -r $GITHUB_WORKSPACE/$BUILD_DIR/* $DEPLOY_DIR/
 
-          # Eliminar la carpeta WebGL (si deseas borrar la carpeta después de copiar los archivos)
-          rm -rf $GITHUB_WORKSPACE/$BUILD_DIR
+          # Mover el contenido de la carpeta WebGL al root del branch gh-pages
+          mv $DEPLOY_DIR/WebGL/* $DEPLOY_DIR/
+          
+          # Eliminar la carpeta WebGL vacía
+          rm -rf $DEPLOY_DIR/WebGL
 
           # Commit y push a la branch gh-pages
           git add .
